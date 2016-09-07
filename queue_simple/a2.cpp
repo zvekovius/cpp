@@ -81,8 +81,9 @@ void queueOps::deq()
 		
 		newHead = traverseQueue;
 		
-		cout << "Head address before this loop: " << &head->next << endl;
-
+		cout << "Head before this loop: " << head << endl;
+		cout << "Back is currently: " << back << endl;
+		
 		//This loop goes 5 values too far for some reason... Is head not being set correctly?
 		while( traverseQueue->next != NULL )
 		{
@@ -91,9 +92,20 @@ void queueOps::deq()
 			traverseQueue = traverseQueue->next;
 		}
 
-		delete(traverseQueue); 
-		head = newHead;
-		head->next = NULL;
+		if(head == back )
+		{
+			cout << "DEBUG: Head is NULL" << endl;
+			delete(head);
+		}
+		else
+		{
+			cout << "DEBUG: Head NOT NULL" << endl;
+			delete(traverseQueue);
+			head = newHead;
+			head->next = NULL;
+		}
+
+		cout << "DEBUG: back is" << back << "DEBUG: head is" << head << endl;
 		/*
 		//Set the next item in queue to temp pointer from head -> next.
 		newHead = head->next;
@@ -101,8 +113,10 @@ void queueOps::deq()
 		//Release the current head.
 		delete(head);
 		
-		//Make the head the next item in line.
-		head = newHead; */
+		if(head =! NULL )
+		{
+			//Make the head the next item in line.
+			head = newHead; */
 	}
 	else
 	{
@@ -137,15 +151,17 @@ void queueOps::printq()
 {
 	cout << "Back -->";
 
-	queue* tmp; 
-	tmp = back; 
-
-	while( tmp != NULL)
+	if( head != NULL )
 	{
-		cout << tmp->val << " ";
-		tmp = tmp->next;
+		queue* tmp; 
+		tmp = back; 
+		
+		while( tmp != NULL)
+		{
+			cout << tmp->val << " ";
+			tmp = tmp->next;
+		}
 	}
-
 	cout << "<-- Front" << endl;
 }
 
