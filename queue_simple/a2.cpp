@@ -50,12 +50,6 @@ void queueOps::enq(int data)
 	tmp->val = data;
 	tmp->next = NULL;
 
-	//Create a pointer to hold the previous position.
-	queue* previousPos;
-
-	//Create a pointer to traverse the list.
-	queue* traverseList;
-
 	if( head != NULL )
 	{
 		//Use the back pointer to append to the queue.
@@ -86,15 +80,20 @@ void queueOps::deq()
 		traverseQueue = back;
 		
 		newHead = traverseQueue;
+		
+		cout << "Head address before this loop: " << &head->next << endl;
+
+		//This loop goes 5 values too far for some reason... Is head not being set correctly?
 		while( traverseQueue->next != NULL )
 		{
-			cout << "Value: " << traverseQueue->val << endl;
+			cout << "DEBUG: Value of current node: " << traverseQueue->val << endl;
 			newHead = traverseQueue;
 			traverseQueue = traverseQueue->next;
 		}
 
 		delete(traverseQueue); 
 		head = newHead;
+		head->next = NULL;
 		/*
 		//Set the next item in queue to temp pointer from head -> next.
 		newHead = head->next;
