@@ -20,9 +20,9 @@ struct queue{
 	int val;
 	queue* next;
 };
+/* This queue will be implemented with the tail being a usual "head" and the head will actually be the "last"element in the list where head->next is NULL. This will allow us to prin the list back->front. All enqueue operations will be prepending elements onto the queue. */
 
 //Class to handle all queue operations.
-
 class queueOps{
 public: 
 	queueOps();
@@ -59,7 +59,7 @@ void queueOps::enq(int data)
 	if( head != NULL )
 	{
 		//Use the back pointer to append to the queue.
-		back->next = tmp;
+		tmp->next = back;
 		back = tmp;
 	}
 	else
@@ -79,6 +79,23 @@ void queueOps::deq()
 		//Creat new pointer to store temp position.
 		queue* newHead;
 		
+		//Since head->next won't be a value, we need to traverse to find when the pointer is null.
+		queue* traverseQueue;
+		
+		//Set the pointer to the back of the queue.
+		traverseQueue = back;
+		
+		newHead = traverseQueue;
+		while( traverseQueue->next != NULL )
+		{
+			cout << "Value: " << traverseQueue->val << endl;
+			newHead = traverseQueue;
+			traverseQueue = traverseQueue->next;
+		}
+
+		delete(traverseQueue); 
+		head = newHead;
+		/*
 		//Set the next item in queue to temp pointer from head -> next.
 		newHead = head->next;
 	
@@ -86,7 +103,7 @@ void queueOps::deq()
 		delete(head);
 		
 		//Make the head the next item in line.
-		head = newHead;
+		head = newHead; */
 	}
 	else
 	{
@@ -122,7 +139,7 @@ void queueOps::printq()
 	cout << "Back -->";
 
 	queue* tmp; 
-	tmp = head; 
+	tmp = back; 
 
 	while( tmp != NULL)
 	{
