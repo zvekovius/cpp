@@ -81,42 +81,27 @@ void queueOps::deq()
 		
 		newHead = traverseQueue;
 		
-		cout << "Head before this loop: " << head << endl;
-		cout << "Back is currently: " << back << endl;
 		
 		//This loop goes 5 values too far for some reason... Is head not being set correctly?
 		while( traverseQueue->next != NULL )
 		{
-			cout << "DEBUG: Value of current node: " << traverseQueue->val << endl;
 			newHead = traverseQueue;
 			traverseQueue = traverseQueue->next;
 		}
 
+		//If there is only 1 element in the list.
 		if(head == back )
 		{
-			cout << "DEBUG: Head is NULL" << endl;
 			delete(head);
+			head = NULL;
+			back = NULL;
 		}
 		else
 		{
-			cout << "DEBUG: Head NOT NULL" << endl;
 			delete(traverseQueue);
 			head = newHead;
 			head->next = NULL;
 		}
-
-		cout << "DEBUG: back is" << back << "DEBUG: head is" << head << endl;
-		/*
-		//Set the next item in queue to temp pointer from head -> next.
-		newHead = head->next;
-	
-		//Release the current head.
-		delete(head);
-		
-		if(head =! NULL )
-		{
-			//Make the head the next item in line.
-			head = newHead; */
 	}
 	else
 	{
@@ -151,6 +136,7 @@ void queueOps::printq()
 {
 	cout << "Back -->";
 
+	//Only attempt to print if there is something in the queue.
 	if( head != NULL )
 	{
 		queue* tmp; 
