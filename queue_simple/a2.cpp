@@ -50,6 +50,8 @@ void queueOps::enq(int data)
 	tmp->val = data;
 	tmp->next = NULL;
 
+	cout << "ENQ: " << tmp->val << endl;
+
 	if( head != NULL )
 	{
 		//Use the back pointer to append to the queue.
@@ -90,6 +92,9 @@ void queueOps::deq()
 		}
 
 		//If there is only 1 element in the list.
+		
+		cout << "DEQ: " << traverseQueue->val << endl;
+
 		if(head == back )
 		{
 			delete(head);
