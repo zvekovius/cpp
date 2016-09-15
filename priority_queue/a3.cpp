@@ -68,32 +68,41 @@ void queueOps::enq(int data)
 	}
 }
 
+//This is now a priority dequeue.
 void queueOps::deq()
 {
 	if(head != NULL)
 	{
 		//Creat new pointer to store temp position.
-		queue* newHead;
-		
+		queue* lowestNode;
+		queue* previousNode;
+		queue* beforeLowest;
+
 		//Since head->next won't be a value, we need to traverse to find when the pointer is null.
 		queue* traverseQueue;
 		
 		//Set the pointer to the back of the queue.
 		traverseQueue = back;
 		
-		newHead = traverseQueue;
+		//Set all tracking nodes to the end of the queue.
+		previousNode = traverseQueue;
+		beforeLowest = traverseQueue;
+		lowestNode = traverseQueue;
 		
-		
-		//This loop goes 5 values too far for some reason... Is head not being set correctly?
+		//Find the highest value in the queue closest to head (equal to).
+		//Also track the node before the highest value for fixup.
 		while( traverseQueue->next != NULL )
 		{
-			newHead = traverseQueue;
+			if( lowestNode->val >= traverseQueue->val )
+			{
+				lowestNode = traverseQueue;
+				previousNode = beforeLowest;
+			}
+			previousNode = traverseQueue;
 			traverseQueue = traverseQueue->next;
 		}
 
 		//If there is only 1 element in the list.
-		
-		cout << "DEQ: " << traverseQueue->val << endl;
 
 		if(head == back )
 		{
@@ -101,11 +110,20 @@ void queueOps::deq()
 			head = NULL;
 			back = NULL;
 		}
+		else if( head == lowestNode )
+		{
+			delete(lowestNode);
+			head = beforeLowest;
+		}
+		else if( back == lowestNode )
+		{
+			back = back->next;
+			delete(lowestNode);
+		}
 		else
 		{
-			delete(traverseQueue);
-			head = newHead;
-			head->next = NULL;
+			beforeLowest->next = traverseQueue->next;
+			delete(lowestNode);
 		}
 	}
 	else
