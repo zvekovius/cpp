@@ -89,14 +89,18 @@ void queueOps::deq()
 		beforeLowest = traverseQueue;
 		lowestNode = traverseQueue;
 		
+		cout << "DEBUG: Before loop, lowest node value: " << lowestNode->val << endl;
+
 		//Find the highest value in the queue closest to head (equal to).
 		//Also track the node before the highest value for fixup.
 		while( traverseQueue->next != NULL )
 		{
+			cout << "DEBUG: Before If, current lowest value: " << lowestNode->val << endl;
 			if( lowestNode->val >= traverseQueue->val )
 			{
 				lowestNode = traverseQueue;
 				previousNode = beforeLowest;
+				cout << "DEBUG: In loop, new lowest Node value: " << lowestNode->val << endl;
 			}
 			previousNode = traverseQueue;
 			traverseQueue = traverseQueue->next;
