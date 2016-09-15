@@ -122,7 +122,7 @@ void queueOps::deq()
 		}
 		else
 		{
-			beforeLowest->next = traverseQueue->next;
+			beforeLowest->next = lowestNode->next;
 			delete(lowestNode);
 		}
 	}
