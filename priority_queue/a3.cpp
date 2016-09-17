@@ -89,43 +89,52 @@ void queueOps::deq()
 		beforeLowest = traverseQueue;
 		lowestNode = traverseQueue;
 		
-		cout << "DEBUG: Before loop, lowest node value: " << lowestNode->val << endl;
 
 		//Find the highest value in the queue closest to head (equal to).
 		//Also track the node before the highest value for fixup.
 		while( traverseQueue->next != NULL )
 		{
-			cout << "DEBUG: Before If, current lowest value: " << lowestNode->val << endl;
 			if( lowestNode->val >= traverseQueue->val )
 			{
 				lowestNode = traverseQueue;
-				previousNode = beforeLowest;
-				cout << "DEBUG: In loop, new lowest Node value: " << lowestNode->val << endl;
+				beforeLowest = previousNode;
 			}
 			previousNode = traverseQueue;
 			traverseQueue = traverseQueue->next;
+
+			if(lowestNode->val >= traverseQueue->val and traverseQueue == head )
+			{
+				lowestNode = traverseQueue;
+				beforeLowest = previousNode;
+			}
+
 		}
 
 		//If there is only 1 element in the list.
 
 		if(head == back )
 		{
+			cout << "DEQ: " << head->val << endl;
 			delete(head);
 			head = NULL;
 			back = NULL;
 		}
 		else if( head == lowestNode )
 		{
+			cout << "DEQ: " << lowestNode->val << endl;
 			delete(lowestNode);
 			head = beforeLowest;
+			head->next = NULL; 
 		}
 		else if( back == lowestNode )
 		{
+			cout << "DEQ: " << lowestNode->val << endl;
 			back = back->next;
 			delete(lowestNode);
 		}
 		else
 		{
+			cout << "DEQ: " << lowestNode->val << endl;
 			beforeLowest->next = lowestNode->next;
 			delete(lowestNode);
 		}
@@ -134,6 +143,9 @@ void queueOps::deq()
 	{
 		//Do nothing. No list to act on.
 	}
+	
+
+
 }
 
 void queueOps::front()
