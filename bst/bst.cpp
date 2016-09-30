@@ -86,8 +86,15 @@ treeNode* bst::partialInsertHelper(int val, treeNode* node)
 	//subtree to the function.
 	else
 	{
-		//If val < node->val
-		node->left = partialInsertHelper(val, node->left);
+		if( val < node->val )
+		{
+			//If val < node->val
+			node->left = partialInsertHelper(val, node->left);
+		}
+		else if ( val >= node->val )
+		{
+			node->right = partialInsertHelper(val, node->right);
+		}
 		//else do this stuff to the right. node->right
 	}
 	return node;
@@ -95,18 +102,29 @@ treeNode* bst::partialInsertHelper(int val, treeNode* node)
 
 void bst::preorder()
 {
-//if node->left != NULL recurse
+	//if node->left != NULL recurse
+	preorderHelper( root );
+	cout << endl; 
 
 }
 
 void bst::preorderHelper(treeNode* node)
 {
+//	if(node->left != NULL or node->right != NULL )
+	if(node != NULL)
+	{
+		cout << node->val << " "; 
+		preorderHelper(node->left);
+		preorderHelper(node->right);
+	}
 
 }
 
 int main()
 {
 	bst bst1;
+
+	bst1.partialInsert(5);
 
 	for(int i = 0; i < 10; i++)
 	{
