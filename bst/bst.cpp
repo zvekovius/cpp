@@ -7,7 +7,7 @@ struct treeNode
 	int val;
 	treeNode* left;
 	treeNode* right;
-}
+};
 
 class bst
 {
@@ -20,7 +20,7 @@ private:
 	treeNode* partialInsertHelper(int, treeNode*);
 	void preorderHelper(treeNode*);
 	treeNode* root;
-}
+};
 
 bst::bst()
 {
@@ -86,13 +86,16 @@ treeNode* bst::partialInsertHelper(int val, treeNode* node)
 	//subtree to the function.
 	else
 	{
+		//If val < node->val
 		node->left = partialInsertHelper(val, node->left);
+		//else do this stuff to the right. node->right
 	}
 	return node;
 }
 
 void bst::preorder()
 {
+//if node->left != NULL recurse
 
 }
 
