@@ -1,6 +1,13 @@
 #include <iostream>
+#include <fstream>
 
 using namespace std;
+// 1 - Insert
+// 2 - Inorder
+// 3 - Postorder
+// 4 - Preorder
+// 5 - Search
+
 
 struct treeNode
 {
@@ -17,14 +24,14 @@ public:
 	void preorder();
 	void postorder();
 	void inorder();
-	void search();
+	bool search(int);
 
 private:
 	treeNode* partialInsertHelper(int, treeNode*);
 	void preorderHelper(treeNode*);
 	void postorderHelper(treeNode*);
 	void inorderHelper(treeNode*);
-	void searchHelper(treeNode*);
+	bool searchHelper(int, treeNode*);
 	treeNode* root;
 };
 
@@ -68,13 +75,16 @@ treeNode* bst::partialInsertHelper(int val, treeNode* node)
 	}
 	else
 	{
+		//If value is less than root, to the left.
 		if( val < node->val )
 		{
-			//If val < node->val
+			//cout << "going left " << val << endl;
 			node->left = partialInsertHelper(val, node->left);
 		}
+		//If value is greather than root, to the right.
 		else if ( val >= node->val )
 		{
+			//cout << "going right " << val << endl;
 			node->right = partialInsertHelper(val, node->right);
 		}
 	}
@@ -98,7 +108,6 @@ void bst::preorder()
 
 void bst::preorderHelper(treeNode* node)
 {
-//	if(node->left != NULL or node->right != NULL )
 	if(node != NULL)
 	{
 		cout << node->val << " "; 
@@ -126,8 +135,8 @@ void bst::postorderHelper( treeNode* node )
 {
 	if(node != NULL)
 	{
-		preorderHelper(node->left);
-		preorderHelper(node->right);
+		postorderHelper(node->left);
+		postorderHelper(node->right);
 		cout << node->val << " "; 
 	}
 }
@@ -150,34 +159,89 @@ void bst::inorderHelper( treeNode* node )
 {
 	if(node != NULL)
 	{
-		preorderHelper(node->left);
+		inorderHelper(node->left);
 		cout << node->val << " "; 
-		preorderHelper(node->right);
+		inorderHelper(node->right);
 	}
 }
 
-void bst::search()
+bool bst::search( int val )
 {
-	searchHelper( root );
+	bool found;
+	found = searchHelper( val, root );	
+	return found;
 }
 
-void bst::searchHelper( treeNode* node )
+
+bool bst::searchHelper( int val, treeNode* node )
 {
-// come up with this yet.
+	
+	if(node != NULL )
+	{
+		if( val == node->val )
+		{
+			return true;
+		}
+
+		else if( val < node->val )
+		{
+			return searchHelper( val, node->left);
+		}
+		else if( val >= node->val )
+		{	
+			return searchHelper( val, node->right);
+		}
+
+	}
+	return false;
 }
 
 int main()
 {
-	bst bst1;
+	bst* bst1 = new bst();
+	
+	ifstream commands;
+	commands.open("cmd.txt");
 
-	bst1.partialInsert(5);
-
-	for(int i = 0; i < 10; i++)
+	//Variable to hold command and data.
+	int command = 0;
+	int data = 0;
+	
+	while(commands >> command)
 	{
-		bst1.partialInsert(i);
+		if( command == 1 or command == 5 )
+		{
+			commands >> data;
+		}
+		switch(command)
+		{
+			case 1 : bst1-> partialInsert( data );
+					break;
+			
+			case 2 : bst1->inorder();
+					break;
+
+			case 3 : bst1->postorder();
+					break;
+
+			case 4 : bst1->preorder();
+					break;
+					
+			case 5 : 
+					if( bst1->search( data ) == true )
+					{
+						cout << "We found: " << data << endl;
+					}
+					else
+					{
+						cout << "We did not find: " << data << endl;
+					}
+					break;
+
+			default : cout << "Invalid command, skipping." << endl;
+		}
 	}
-	bst1.preorder();
-	bst1.inorder();
-	bst1.postorder();
+	commands.close();
+	
 	return 0;
 }
