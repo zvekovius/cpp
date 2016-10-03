@@ -36,7 +36,8 @@ private:
 	void preorderHelper(treeNode*);
 	void postorderHelper(treeNode*);
 	void inorderHelper(treeNode*);
-	treeNode* searchHelper(int, treeNode*, treeNode* );
+	treeNode* searchHelper(int, treeNode*, treeNode*);
+	treeNode* searchParent(int, treeNode*, treeNode*);
 	void removeHelper(int, treeNode*, treeNode*);
 	int heightHelper();
 	treeNode* root;
@@ -181,14 +182,13 @@ bool bst::search( int val )
 	bool found;
 
 	//Declare a pointer to determing if the search helper found our value.
-	treeNode* foundPtr;	
+	treeNode* foundPtr;
 	
 	//Set the base condition to NULL.
 	foundPtr = NULL;
 	
 	//Set pointer = to the searchHelper function.
 	foundPtr = searchHelper( val, root, foundPtr );
-
 	
 
 	//Check if searchHelper returned anything.
@@ -211,6 +211,7 @@ treeNode* bst::searchHelper( int val, treeNode* node, treeNode* found )
 	
 	if(node != NULL )
 	{
+		
 		if( val == node->val )
 		{
 			found = node;
@@ -233,6 +234,32 @@ treeNode* bst::searchHelper( int val, treeNode* node, treeNode* found )
 	return found;
 }
 
+treeNode* bst::searchParent(int val, treeNode* node, treeNode* parent )
+{
+	if(node != NULL )
+	{
+		if( val == node->val )
+		{
+			return parent;
+		}
+
+		else if( val < node->val )
+		{
+			parent = node;
+			return searchParent( val, node->left, parent);
+		}
+		else if( val >= node->val )
+		{	
+			parent = node;
+			return searchParent( val, node->right, parent);
+		}
+
+	}
+	else if( root == NULL )
+		cout << "Tree empty." << endl; 
+	parent = NULL; 
+	return parent;
+}
 
 void bst::remove( int val )
 {
@@ -241,27 +268,46 @@ void bst::remove( int val )
 
 	//Pointer to hold return from search.
 	treeNode* removalPointer;
+	treeNode* parent;
+	
+	//Value for leaf comparison to parent val.
+	int compare = 0;
+	
 	//Pointer to aide in switching values around.
 	treeNode* tmp = NULL;
 
 	//Search for our value.
 	removalPointer = searchHelper( val, root, removalPointer );
+	parent = searchParent( val, root, parent );
 	
+
 	if( removalPointer != NULL )
 	{
 		cout << "Removing: " << val << endl; 
 		//Begin case tests
-		
-		//If we have an orphan leaf, recurse.
+
+		//If we have a leaf, use parent to switch out.
 		if( removalPointer->left == NULL and removalPointer->right == NULL)
 		{
-			removeHelper( val, root, tmp );
+			compare = parent->val;
+			if( val >= compare)
+			{
+				parent->right = NULL;
+			}
+			else if ( val < compare )
+			{
+				parent->left = NULL;
+			}
+			
+			delete( removalPointer );
 		}
 
 		//If we have a parent with two children, recurse.
-		if( removalPointer->left != NULL and removalPointer->right != NULL)
+		else if( removalPointer->left != NULL and removalPointer->right != NULL)
 		{
-			removeHelper( val, root, tmp );
+			cout << "why am i called?";
+			cout << "removal pointer" << removalPointer->val << endl;
+			//removeHelper( val, root, tmp );
 		}
 		//Case does not require recusrive function.
 		else if( removalPointer->left != NULL and removalPointer->right == NULL)
