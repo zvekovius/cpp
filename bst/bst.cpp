@@ -29,7 +29,7 @@ public:
 	void inorder();
 	bool search(int);
 	void remove(int);
-	void height();
+	int height();  //This could be a bool. And make it is left deeper? t/f.
 
 private:
 	treeNode* partialInsertHelper(int, treeNode*);
@@ -38,8 +38,8 @@ private:
 	void inorderHelper(treeNode*);
 	treeNode* searchHelper(int, treeNode*, treeNode*);
 	treeNode* searchParent(int, treeNode*, treeNode*);
-	void removeHelper(int, treeNode*, treeNode*);
-	int heightHelper();
+	int removeHelper(int, treeNode*, treeNode*);
+	int heightHelper( int, treeNode* );
 	treeNode* root;
 };
 
@@ -261,11 +261,9 @@ treeNode* bst::searchParent(int val, treeNode* node, treeNode* parent )
 	return parent;
 }
 
+//Probably not the most efficient as it uses a separate call to grab the parent on the search. Hopefully there are some wins to avoiding recursive calls when not needed.
 void bst::remove( int val )
 {
-	/* This function calls searchHelper function to get the value we are looking for. This allows the function to avoid any recursive calls if its not needed.
-	   However, this does potentially include another search through the tree. The thinking behind this is to reduce another O(n) call if it isn't needed. Since searching is O(log(n)) we should have some wins for calling it before jumping into a O(n) function. */
-
 	//Pointer to hold return from search.
 	treeNode* removalPointer;
 	treeNode* parent;
@@ -286,8 +284,16 @@ void bst::remove( int val )
 		cout << "Removing: " << val << endl; 
 		//Begin case tests
 
+		//If the removal element is the last one in the tree.
+		if ( removalPointer == root and removalPointer->left == NULL and removalPointer->right == NULL)
+		{
+			cout << "At the end!" << endl;
+			delete(removalPointer);
+			root = NULL;
+		}
+		
 		//If we have a leaf, use parent to switch out.
-		if( removalPointer->left == NULL and removalPointer->right == NULL)
+		else if( removalPointer->left == NULL and removalPointer->right == NULL)
 		{
 			compare = parent->val;
 			if( val >= compare)
@@ -305,9 +311,9 @@ void bst::remove( int val )
 		//If we have a parent with two children, recurse.
 		else if( removalPointer->left != NULL and removalPointer->right != NULL)
 		{
-			cout << "why am i called?";
-			cout << "removal pointer" << removalPointer->val << endl;
-			//removeHelper( val, root, tmp );
+			int replace_val;
+			replace_val = removeHelper( val, removalPointer->right, parent);
+			removalPointer->val = replace_val;
 		}
 		//Case does not require recusrive function.
 		else if( removalPointer->left != NULL and removalPointer->right == NULL)
@@ -315,62 +321,74 @@ void bst::remove( int val )
 			tmp = removalPointer->left;
 			removalPointer->val = tmp->val; 
 			removalPointer->left = tmp->left;
+			removalPointer->right = tmp->right;
 			delete(tmp);
+
 		}
 		//Case does not require recusrive function.
 		else if( removalPointer->left == NULL and removalPointer->right != NULL )
 		{
 			tmp = removalPointer->right; 
 			removalPointer->val = tmp->val; 
-			removalPointer->right = tmp->right; 
-			delete(tmp); 
-			//removeHelper( val, removalPointer );
+			removalPointer->right = tmp->right;
+			removalPointer->left = tmp->left;
+			delete(tmp);
+
 		}
 	}
 	else
 		cout << "Value: " << val << " cannot be removed. Not found." << endl;
+	
 }
 
-void bst::removeHelper( int val, treeNode* node, treeNode* tmp )
+int bst::removeHelper( int val, treeNode* node, treeNode* lastParent )
 {
 	//parent nodes (2 children)
 	//--> Find the largest item in the left subtree
 	//--> Find the smallest item in the right subtree
 	//--> Put that node in place of the one you want to remove.
-	cout << "I'm going to recurse to delete!" << endl;
 
-	//Since this function is called, we know the value is somewhere in the tree.
-	if( node != NULL )
+	if( node->left == NULL)
 	{
-		if ( val == node->val )
+		int remove_val;
+		//Check to see if it is a parent to a larger value.
+		if(node->right != NULL)
 		{
-			tmp = node; 		
-			cout << "Found value for recurse removal." << endl;
+			lastParent->left = node->right;
 		}
-		else if( val < node-> val )
-			return removeHelper( val, node->left, tmp );
-		else if( val >= node->val )
-			return removeHelper( val, node->right, tmp );
-			
-		if( tmp != NULL )
+		else
 		{
-			cout << "I should be ignored until the last call returns." << endl;
+		lastParent->left = NULL;
 		}
-	}	
+		
+		remove_val = node->val;
+		
+		delete(node);
+		
+		return remove_val;
+	}
+	else
+	{
+		lastParent = node;
+		removeHelper(val, node->left, lastParent);
+	}
 }
 
-void bst::height()
+int bst::height()
 {
-
+int side;
+ heightHelper( side, root );
+ return side;
 }
 
-int bst::heightHelper()
+int bst::heightHelper( int side, treeNode* node )
 {
 //Number of nodes to the root, from the deepest node in the tree.
 //Recursively calculate the height of the left subtree
 //Recurse calc. the height of the right subtree
 //Figure out which one is bigger and add one.
 //Return that back.
+
 
 }
 
