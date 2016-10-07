@@ -30,6 +30,8 @@ public:
 	bool search(int);
 	void remove(int);
 	void height();
+	void findMin();
+	void findMax();
 
 private:
 	treeNode* partialInsertHelper(int, treeNode*);
@@ -41,13 +43,15 @@ private:
 	int removeHelper(int, treeNode*, treeNode*);
 	int heightHelper( treeNode* );
 	treeNode* root;
-	int right,left;
+	int right,left,val;
+	int findMinHelper( treeNode* );
+	int findMaxHelper( treeNode* );
 };
 
 bst::bst()
 {
 	root = NULL;
-	right,left = 0;
+	right,left,val = 0;
 }
 
 //preorder traversal
@@ -403,6 +407,42 @@ else
 }
 }
 
+void bst::findMin()
+{
+	int min = 0;
+	min = findMinHelper( root );
+	cout << "Min Value: " << min << endl;
+}
+
+int bst::findMinHelper( treeNode* node )
+{
+	if( node != NULL )
+	{
+		if(node->left == NULL)
+				val = node->val;
+		findMinHelper( node->left );
+	}
+	return val;
+}
+
+void bst::findMax()
+{
+	int max = 0;
+	max = findMaxHelper( root );
+	cout << "Max Value: " << max << endl;
+}
+
+int bst::findMaxHelper( treeNode* node)
+{
+	if( node != NULL )
+	{
+		if(node->right == NULL)
+				val = node->val;
+		findMaxHelper( node->right );
+	}
+	return val;
+}
+
 int main()
 {
 	bst* bst1 = new bst();
@@ -450,11 +490,11 @@ int main()
 			case 7 : bst1->height();
 					break;
 
-//			case 8 : bst1->findMin();
-//					break;
+			case 8 : bst1->findMin();
+					break;
 
-//			case 9 : bst1->findMax();
-//					break;
+			case 9 : bst1->findMax();
+					break;
 			default : cout << "Invalid command, skipping." << endl;
 		}
 	}
