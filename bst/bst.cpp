@@ -29,7 +29,7 @@ public:
 	void inorder();
 	bool search(int);
 	void remove(int);
-	int height();  //This could be a bool. And make it is left deeper? t/f.
+	void height();
 
 private:
 	treeNode* partialInsertHelper(int, treeNode*);
@@ -39,13 +39,15 @@ private:
 	treeNode* searchHelper(int, treeNode*, treeNode*);
 	treeNode* searchParent(int, treeNode*, treeNode*);
 	int removeHelper(int, treeNode*, treeNode*);
-	int heightHelper( int, treeNode* );
+	int heightHelper( treeNode* );
 	treeNode* root;
+	int right,left;
 };
 
 bst::bst()
 {
 	root = NULL;
+	right,left = 0;
 }
 
 //preorder traversal
@@ -287,7 +289,6 @@ void bst::remove( int val )
 		//If the removal element is the last one in the tree.
 		if ( removalPointer == root and removalPointer->left == NULL and removalPointer->right == NULL)
 		{
-			cout << "At the end!" << endl;
 			delete(removalPointer);
 			root = NULL;
 		}
@@ -374,22 +375,32 @@ int bst::removeHelper( int val, treeNode* node, treeNode* lastParent )
 	}
 }
 
-int bst::height()
+void bst::height()
 {
-int side;
- heightHelper( side, root );
- return side;
+	int height = 0;
+	height = heightHelper( root );
+	cout << "Height: " << height << endl;
 }
 
-int bst::heightHelper( int side, treeNode* node )
+int bst::heightHelper( treeNode* node )
 {
 //Number of nodes to the root, from the deepest node in the tree.
 //Recursively calculate the height of the left subtree
 //Recurse calc. the height of the right subtree
 //Figure out which one is bigger and add one.
 //Return that back.
+if( node == NULL)
+		return 0;
+else
+{
+	left = heightHelper(node->left);
+	right = heightHelper(node->right);
 
-
+	if ( left >= right)
+		return 1 + left;
+	else
+		return 1 + right;
+}
 }
 
 int main()
@@ -436,8 +447,8 @@ int main()
 			case 6 : bst1->remove( data );
 					break;
 
-//			case 7 : bst1->height();
-//					break;
+			case 7 : bst1->height();
+					break;
 
 //			case 8 : bst1->findMin();
 //					break;
