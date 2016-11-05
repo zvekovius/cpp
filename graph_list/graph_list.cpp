@@ -310,7 +310,7 @@ int graph_list::next()
 		//Also track the node before the highest value for fixup.
 		while( traverseQueue->next != NULL )
 		{
-			if( lowestNode->val >= traverseQueue->val )
+			if( lowestNode->weight >= traverseQueue->weight )
 			{
 				lowestNode = traverseQueue;
 				beforeLowest = previousNode;
@@ -318,7 +318,7 @@ int graph_list::next()
 			previousNode = traverseQueue;
 			traverseQueue = traverseQueue->next;
 
-			if(lowestNode->val >= traverseQueue->val and traverseQueue == head )
+			if(lowestNode->weight >= traverseQueue->weight and traverseQueue == head )
 			{
 				lowestNode = traverseQueue;
 				beforeLowest = previousNode;
@@ -368,7 +368,7 @@ void graph_list::deq()
 		//Also track the node before the highest value for fixup.
 		while( traverseQueue->next != NULL )
 		{
-			if( lowestNode->val >= traverseQueue->val )
+			if( lowestNode->weight > traverseQueue->weight )
 			{
 				lowestNode = traverseQueue;
 				beforeLowest = previousNode;
@@ -376,7 +376,7 @@ void graph_list::deq()
 			previousNode = traverseQueue;
 			traverseQueue = traverseQueue->next;
 
-			if(lowestNode->val >= traverseQueue->val and traverseQueue == head )
+			if(lowestNode->weight >= traverseQueue->weight and traverseQueue == head )
 			{
 				lowestNode = traverseQueue;
 				beforeLowest = previousNode;
