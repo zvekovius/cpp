@@ -11,10 +11,6 @@ using namespace std;
 
 // Remaining Items to Implement:
 /*
-- Print complete train schedule for the day. 
-----> Station Departing from, what time departs, arrival station, time of arrival, travel time between two stations.
-- Determine if there is a DIRECT route from Station A to Station B. 
-----> Input Depature and arrival station number.
 - Is station B reachable from Station A. 
 ----> Input: Depature and Arrival station number.
 - Shortest riding time between 2 stations (hours:minutes) from A to B
@@ -52,6 +48,7 @@ public:
 	bool debug; //Turns on debug statements
 	void printGraph();
 	void printSchedule();
+	bool determineDirect(int,int);
 private:
 	int nodeCount; //Keeps track of how many stations we have.
 	//Structure to hold the train schedule.
@@ -69,6 +66,7 @@ private:
 train_manage::train_manage(int nodes)
 {
 	debug = true;
+	nodeCount = 0;
 	nodeCount = nodes + 1;
 	int i;
 	
@@ -167,7 +165,58 @@ void train_manage::printGraph()
 
 void train_manage::printSchedule()
 {
+	int i = 0;
 	
+	//Variables to get formatted times from minutes since midnight to HH:MM (24 hour format).
+	int time = 0;
+	int hours = 0;
+	int minutes = 0;
+	int format_time_dep_hours = 0;
+	int format_time_dep_minutes = 0;
+	int format_time_arr_hours = 0;
+	int format_time_arr_minutes = 0;
+	
+	listNode* tmp; 
+	
+	for(i=0; i < nodeCount; i++)
+	{
+		tmp = list[i].next;
+		
+		while(tmp != NULL)
+		{
+			time = tmp->arv_time - tmp->dep_time;
+			hours = time/60;
+			minutes = time % 60;
+			format_time_dep_hours = tmp->dep_time / 60;
+			format_time_dep_minutes = tmp->dep_time % 60;
+			format_time_arr_hours = tmp->arv_time / 60;
+			format_time_arr_minutes = tmp->arv_time % 60;
+			
+			//Clean me up.
+			cout << i << "-" << stations[i] << " leaves at " << setfill('0') << setw(2) << format_time_dep_hours << ":" << setfill('0') << setw(2) << format_time_dep_minutes << " and arrives at " << tmp->dst_station << "-" << stations[tmp->dst_station] << " at " << setfill('0') << setw(2) << format_time_arr_hours << ":" << setfill('0') << setw(2) << format_time_arr_minutes << ", " << hours << " hr and " << minutes << " min total." << endl;
+			tmp = tmp->next;
+		}
+	}
+}
+
+bool train_manage::determineDirect( int dep, int arr )
+{
+	int i = 0;
+	bool found;
+	
+	listNode* tmp;
+	tmp = list[dep].next;
+		
+	while(tmp != NULL)
+	{
+		if( tmp->dst_station == arr )
+		{
+			found = true;
+			break;
+		}
+		else
+			tmp = tmp->next;
+	}
 }
 
 int main ()
@@ -175,6 +224,7 @@ int main ()
 	ifstream stationsFile;
 	int source = 0, destination = 0, dep_time = 0, arr_time = 0, nodes = 0, station_number = 0;
 	int userIn;
+	bool route = false;
 	string station_name = "";
 	train_manage* tm = NULL;
 	
@@ -247,6 +297,7 @@ int main ()
 		cout << "Option 7 - Exit Train Scheduler 2000" << endl;
 		if(tm->debug)
 			cout << "Option 8 - Print Graph" << endl;
+		cout << "----------------------------------------" << endl;
 		cout << "Option: ";
 		cin >> userIn;
 		switch(userIn)
@@ -270,7 +321,20 @@ int main ()
 				station_name = tm->findStationByNumber( station_number );
 				cout << station_name << endl;
 				break;
+			case 3: 
+				cout << "Enter your beginning station: ";
+				cin >> source;
+				cout << "Enter your destination station: ";
+				cin >> destination;
 				
+				route = tm->determineDirect( source, destination );
+				
+				//Clean output up.
+				if(route)
+					cout << "There is a direct route from: " << source << "-" << tm->stations[source] << " to " << destination << "-" << tm->stations[destination] << endl;
+				else
+					cout << "There is not a direct route from: " << source << "-" << tm->stations[source] << " to " << destination << "-" << tm->stations[destination] << endl;
+				break;
 			case 7: 
 				return 0;
 			case 8: 
