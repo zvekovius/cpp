@@ -6,27 +6,17 @@
 #include <climits>
 #include <string>
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 
-// Remaining Items to Implement:
+
 /*
-- Is station B reachable from Station A. 
-----> Input: Depature and Arrival station number.
-- Shortest riding time between 2 stations (hours:minutes) from A to B
-----> Only time spent on train (no layover time).
-----> If no route is there, alert user. 
-----> Input: Departure and arrival station number
+// Remaining Items to Implement:
 - Find the shortest OVERALL travel time (layovers included)
 ----> Input: Departure station number, arrival station number, time you will arrive at your departure station in 24 hour format (HH:MM).
-
-
-Program Changes / Questions for Instructor:
--> Move the stations vector to private after done debugging.
--> Check output screen shots and make sure functions return similar output
--> Which file will always come first? Stations or train schedule? -- Assume station definitions?
--> Can we assume the stations file will not try to overwrite a station that is already defined?
-
+- Change canReach & directRoute functions to care about times when adding to the queue.
+- Cleanup duplication of code (3 different functions for is there a route, shortest route, shortest route overall).
 
 Program Assumes:
 -> There will be no station name duplication
@@ -49,6 +39,11 @@ public:
 	void printGraph();
 	void printSchedule();
 	bool determineDirect(int,int);
+	void shortestTrainRide(int,int);
+	bool canReachDest(int,int);
+	bool overallShortestRoute( int,int,int);
+	int stringToInt( string );
+	
 private:
 	int nodeCount; //Keeps track of how many stations we have.
 	//Structure to hold the train schedule.
@@ -56,16 +51,34 @@ private:
 		int dst_station;
 		int dep_time;
 		int arv_time;
+		int ride_time;
 		listNode* next;
 	};
-	
+	struct queuep{
+		int val;
+		int weight;
+		queuep* next;
+	};
+	struct totalTime {
+		int dep_station;
+		int dst_station;
+		int train_time;
+		int layover_time;
+		totalTime* next;
+	};
+	void enq(int,int);
+	int next();
+	void deq();
+	bool isEmpty();
 	//Array to hold the parents of all listNodes.
 	listNode* list;	
+	queuep* head;
+	queuep* back;
 };
 
 train_manage::train_manage(int nodes)
 {
-	debug = true;
+	debug = false;
 	nodeCount = 0;
 	nodeCount = nodes + 1;
 	int i;
@@ -79,6 +92,7 @@ train_manage::train_manage(int nodes)
 		list[i].dst_station = -1;
 		list[i].dep_time = -1;
 		list[i].arv_time = -1;
+		list[i].ride_time = -1;
 		list[i].next = NULL;
 
 		stations.push_back("Undefined");
@@ -93,6 +107,7 @@ void train_manage::setEdge( int source, int destination, int dtime, int atime )
 	tmp->dst_station = destination;
 	tmp->dep_time = dtime;
 	tmp->arv_time = atime;
+	tmp->ride_time = atime - dtime;
 	tmp->next = list[source].next;
 	list[source].next = tmp;
 }
@@ -156,7 +171,7 @@ void train_manage::printGraph()
 	
 		while(tmp != NULL )
 		{
-			cout << "-->" << tmp->dst_station << "(" << tmp->dep_time << ")" << "(" << tmp->arv_time << ")";
+			cout << "-->" << tmp->dst_station << "(" << tmp->dep_time << ")" << "(" << tmp->arv_time << ")" << "(" << tmp->ride_time << ")";
 			tmp = tmp->next;
 		}
 		cout << "--> NULL" << endl;
@@ -219,14 +234,446 @@ bool train_manage::determineDirect( int dep, int arr )
 	}
 }
 
+void train_manage::shortestTrainRide( int start, int dst )
+{
+	//Using Dijkstra's to find shortest path.
+	vector<bool> visited;
+	vector<int> cost;
+	listNode* tmp; 
+	int i = 0, node;
+	bool reachable = false;
+	int hours = 0;
+	int minutes = 0;
+
+	for( i = 0; i < nodeCount; i++)
+		visited.push_back(false), cost.push_back(INT_MAX);
+	
+	cost[start] = 0;
+
+	enq(start, 0);
+
+	while( !isEmpty())
+	{
+		//Node is just an int. Not the whole object. Just the value of the object
+		node = next();
+		deq();
+		if( !visited[node])
+		{
+			visited[node] = true;
+			tmp = list[node].next;
+			while( tmp != NULL )
+			{
+				//cost[node] + current_cost (tmp->ride_time) <-- That's from node. cost[node] is from start -> node.
+				if(debug)
+				{
+					cout << "Cost[Node]: " << cost[node] << endl;
+					cout << "tmp->dst_station: " << tmp->dst_station << endl;
+					cout << "tmp->ride_time: " << tmp->ride_time << endl;
+					cout << "cost[node] + tmp->ride_time < cost [tmp->dst_station]" << endl;
+					cout << cost[node] << " + " << tmp->ride_time << " < " << cost[tmp->dst_station] << endl;				
+				}
+				if ( tmp->ride_time + cost[node] < cost[tmp->dst_station] )
+					cost[tmp->dst_station] = tmp->ride_time + cost[node];				
+				else if( (cost[node] + tmp->ride_time) < cost[tmp->dst_station] )
+					cost[tmp->dst_station] = tmp->ride_time + cost[tmp->dst_station];
+				if( tmp->dst_station == dst )
+					reachable = true;
+				if( !visited[tmp->dst_station])
+					enq(tmp->dst_station, tmp->ride_time);
+				tmp = tmp->next;
+			}
+		}	
+	}
+	
+	//If it can be reached using different trains:
+	if(reachable)
+	{
+		hours = cost[dst]/60;
+		minutes = cost[dst]%60;
+		
+		cout << "To go from " << stations[start] << " to " << stations[dst] << " you will need to the train for " << hours << " hours and " << minutes << " minutes." << endl;
+	}
+	else
+		cout << "Your destintation is not reachable from that depature station" << endl;
+}
+
+bool train_manage::canReachDest( int start, int dst )
+{
+	//Using Dijkstra's to find shortest path.
+	vector<bool> visited;
+	vector<int> cost;
+	listNode* tmp; 
+	int i = 0, node;
+	bool reachable = false;
+	int hours = 0;
+	int minutes = 0;
+
+	for( i = 0; i < nodeCount; i++)
+		visited.push_back(false), cost.push_back(INT_MAX);
+	
+	cost[start] = 0;
+
+	enq(start, 0);
+
+	while( !isEmpty())
+	{
+		//Node is just an int. Not the whole object. Just the value of the object
+		node = next();
+		deq();
+		if( !visited[node])
+		{
+			visited[node] = true;
+			tmp = list[node].next;
+			while( tmp != NULL )
+			{
+				//cost[node] + current_cost (tmp->ride_time) <-- That's from node. cost[node] is from start -> node.
+				if(debug)
+				{
+					cout << "Cost[Node]: " << cost[node] << endl;
+					cout << "tmp->dst_station: " << tmp->dst_station << endl;
+					cout << "tmp->ride_time: " << tmp->ride_time << endl;
+					cout << "cost[node] + tmp->ride_time < cost [tmp->dst_station]" << endl;
+					cout << cost[node] << " + " << tmp->ride_time << " < " << cost[tmp->dst_station] << endl;				
+				}
+				if ( tmp->ride_time + cost[node] < cost[tmp->dst_station] )
+					cost[tmp->dst_station] = tmp->ride_time + cost[node];				
+				else if( (cost[node] + tmp->ride_time) < cost[tmp->dst_station] )
+					cost[tmp->dst_station] = tmp->ride_time + cost[tmp->dst_station];
+				if( tmp->dst_station == dst ) 
+				{	
+					reachable = true;
+				}
+				if( !visited[tmp->dst_station])
+					enq(tmp->dst_station, tmp->ride_time);
+				tmp = tmp->next;
+			}
+		}	
+	}
+	return reachable;
+}
+
+bool train_manage::overallShortestRoute( int start, int dst, int start_time )
+{
+	//Using Dijkstra's to find shortest path.
+	vector<bool> visited;
+	vector<int> cost;
+	vector<int> parent;
+	listNode* tmp; 
+	listNode* previous;
+	int i = 0, node = -1;
+	bool reachable = false;
+	bool found = false;
+	int hours = 0; //Conversion variables from minutes since midnight -> 24 Hour format
+	int minutes = 0;
+	int layover_hold = -1; //Holds the layover time from the last parent node.
+	int compare = 0; //We can't over-write layover-hold, so have a compare value for adding to all weights.
+
+	//Initialize all vectors.
+	for( i = 0; i < nodeCount; i++)
+		visited.push_back(false), cost.push_back(INT_MAX), parent.push_back(-1);
+	
+	//Set the weight to the starting value and sent our starting value to the queue with a weight of 0.
+	cost[start] = 0;
+	enq(start, 0);
+	
+	//While the priority queue is not empty.
+	while( !isEmpty())
+	{
+		//Node is just an int. Not the whole object. Just the value of the object
+		//Get the next node in the queue.
+		node = next();
+		//Pop it from priority queue.
+		deq();
+		
+		//If we haven't locked this node in yet, start processing it.
+		if( !visited[node])
+		{
+			//For this implementaiton, if we have reached our destination, we are done.
+			if(node == dst)
+				break;
+			
+			//Mark the node as done & visisted.
+			visited[node] = true;
+			
+			//Set our traversal pointer to the first node in the graph.
+			tmp = list[node].next;
+			
+			
+			//Setting the layover time for the base case.
+			//base case condition
+			if( node == start )
+				layover_hold = start_time;
+			//iteration cases (holdovers).
+			else
+				layover_hold = previous->arv_time;
+			while( tmp != NULL )
+			{
+				compare = tmp->dep_time - layover_hold;
+				//Subtract the depature time of the next value from the arv_time of the last train.
+				if( node == start)
+				{
+					if(compare >= 0)
+						found = true;
+				}
+				//cost[node] + current_cost (tmp->ride_time) <-- That's from node. cost[node] is from start -> node.
+				if(debug)
+				{
+					//Debug statements for following the calculations.
+					cout << "Going from: " << node << " to " << tmp->dst_station << endl;
+					cout << "Cost[Node]: " << cost[node] << endl;
+					cout << "tmp->dst_station: " << tmp->dst_station << endl;
+					cout << "tmp->ride_time: " << tmp->ride_time << endl;
+					cout << "layovertime " << compare << endl;
+					cout << "cost[node] + tmp->ride_time < cost [tmp->dst_station]" << endl;
+					cout << cost[node] << " + " << tmp->ride_time << " < " << cost[tmp->dst_station] << endl;				
+				}
+				
+				//Set distance if our layover time + ride time is less thant he current cost, we haven't visited the node and the current cost is not Infinity.
+				if ( ((tmp->ride_time + compare) + cost[node] < cost[tmp->dst_station]) && !visited[tmp->dst_station] && cost[node] != INT_MAX )
+				{	
+					cost[tmp->dst_station] = tmp->ride_time + compare + cost[node];
+					if(parent[node] == -1)
+						parent[node] = tmp->dst_station;
+				}
+
+				//Keep track if we actually get to our destination or not.
+				if( tmp->dst_station == dst ) 
+				{
+					reachable = true;
+				}
+				//layover_hold makes sure the schedule is actually possible.
+				//This assumes if arr_time & dep_time at one station are the same, the traveler would
+				//still make it. 0 would be threshold of layover time.
+				//If its negative, it won't work.
+				
+				//If we haven't verified this node yet, place it on the queue to be processed. The Queue is priority so we don't worry abou the weight yet. 
+				//Process the layover time to this node, if its less than 0 we assume that train will not work for us.
+				if( !visited[tmp->dst_station] and compare >= 0)
+				{
+					previous = tmp;
+					enq(tmp->dst_station, tmp->ride_time + compare);
+					
+					/*
+					if( parent[node] == -1 )
+						parent[node] = tmp->dst_station;*/
+				}
+				tmp = tmp->next;
+			}
+			//If we have gone through all of the trains for the start station with the given time & have not returned a true found boolean. 
+			//Exit with false as there is no way to leave the first station.
+			if( node == start && !found)
+				return false;
+		}	
+	}
+	cout << endl;
+	
+	for( i=start; i < nodeCount; i++ )
+	{
+		if(parent[i] != -1)
+		{
+			cout << "(" << i << "," << parent[i] << ")";
+		}
+	}
+	return reachable;
+}
+
+/* ----------------------------------- Utility Functions  --------------------------------
+------------------------ Functions not satisfying user input directly --------------------
+*/
+
+int stringToInt( string convert )
+{
+	int result = -1;
+	stringstream ss(convert);
+	return ss >> result ? result: -1;
+}
+
+void train_manage::enq(int data, int weight)
+{
+	//Create the new structure member.
+	queuep* tmp;
+	tmp = new queuep;
+	tmp->val = data;
+	tmp->weight = weight;
+	tmp->next = NULL;
+
+
+	if( head != NULL )
+	{
+		//Use the back pointer to append to the queue.
+		tmp->next = back;
+		back = tmp;
+	}
+	else
+	{
+		//Set the head and back pointers as this value is everything.
+		head = tmp;
+		head->next = NULL;
+		back = tmp; 
+		back->next = NULL;
+	}
+}
+
+int train_manage::next()
+{
+	if(head != NULL)
+	{
+		//Creat new pointer to store temp position.
+		queuep* lowestNode;
+		queuep* previousNode;
+		queuep* beforeLowest;
+
+		//Since head->next won't be a value, we need to traverse to find when the pointer is null.
+		queuep* traverseQueue;
+		
+		//Set the pointer to the back of the queue.
+		traverseQueue = back;
+		
+		//Set all tracking nodes to the end of the queue.
+		previousNode = traverseQueue;
+		beforeLowest = traverseQueue;
+		lowestNode = traverseQueue;
+		
+
+		//Find the highest value in the queue closest to head (equal to).
+		//Also track the node before the highest value for fixup.
+		while( traverseQueue->next != NULL )
+		{
+			if( lowestNode->weight >= traverseQueue->weight )
+			{
+				lowestNode = traverseQueue;
+				beforeLowest = previousNode;
+			}
+			previousNode = traverseQueue;
+			traverseQueue = traverseQueue->next;
+
+			if(lowestNode->weight >= traverseQueue->weight and traverseQueue == head )
+			{
+				lowestNode = traverseQueue;
+				beforeLowest = previousNode;
+			}
+
+		}
+
+		//If there is only 1 element in the list.
+
+		if(head == back )
+		{
+			return head->val;
+		}
+		else
+		{
+			return lowestNode->val;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void train_manage::deq()
+{
+	if(head != NULL)
+	{
+		//Creat new pointer to store temp position.
+		queuep* lowestNode;
+		queuep* previousNode;
+		queuep* beforeLowest;
+
+		//Since head->next won't be a value, we need to traverse to find when the pointer is null.
+		queuep* traverseQueue;
+		
+		//Set the pointer to the back of the queue.
+		traverseQueue = back;
+		
+		//Set all tracking nodes to the end of the queue.
+		previousNode = traverseQueue;
+		beforeLowest = traverseQueue;
+		lowestNode = traverseQueue;
+		
+
+		//Find the highest value in the queue closest to head (equal to).
+		//Also track the node before the highest value for fixup.
+		while( traverseQueue->next != NULL )
+		{
+			if( lowestNode->weight > traverseQueue->weight )
+			{
+				lowestNode = traverseQueue;
+				beforeLowest = previousNode;
+			}
+			previousNode = traverseQueue;
+			traverseQueue = traverseQueue->next;
+
+			if(lowestNode->weight >= traverseQueue->weight and traverseQueue == head )
+			{
+				lowestNode = traverseQueue;
+				beforeLowest = previousNode;
+			}
+
+		}
+
+		//If there is only 1 element in the list.
+
+		if(head == back )
+		{
+			delete(head);
+			head = NULL;
+			back = NULL;
+		}
+		else if( head == lowestNode )
+		{
+			delete(lowestNode);
+			head = beforeLowest;
+			head->next = NULL; 
+		}
+		else if( back == lowestNode )
+		{
+			back = back->next;
+			delete(lowestNode);
+		}
+		else
+		{
+			beforeLowest->next = lowestNode->next;
+			delete(lowestNode);
+		}
+	}
+	else
+	{
+		//Do nothing. No list to act on.
+	}
+	
+
+
+}
+bool train_manage::isEmpty()
+{
+	//Check if head is null or not. If it is, return 1. Else return 0.
+	if( head == NULL )
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
 int main ()
 {
 	ifstream stationsFile;
 	int source = 0, destination = 0, dep_time = 0, arr_time = 0, nodes = 0, station_number = 0;
-	int userIn;
+	int userIn = 0;
 	bool route = false;
+	int colon_found = 0;
 	string station_name = "";
 	train_manage* tm = NULL;
+	string dep_time_s = ""; //string to keep user input for departure time in 24 hour format. 
+	string hours_s = ""; //String to keep the split dep_time_s hours.
+	string minutes_s = ""; //String to keep the minutes of dep_time_s.
+	int hours = 0; //Integer to keep the hours from string conversion to be converted to minutes since midnight. 
+	int minutes = 0; //Integer to keep the hours from string conversion to be converted to minutes since midnight.
 	
 	stationsFile.open("stations.dat");
 	if(stationsFile)
@@ -322,7 +769,7 @@ int main ()
 				cout << station_name << endl;
 				break;
 			case 3: 
-				cout << "Enter your beginning station: ";
+				cout << "Enter your departing station: ";
 				cin >> source;
 				cout << "Enter your destination station: ";
 				cin >> destination;
@@ -334,6 +781,65 @@ int main ()
 					cout << "There is a direct route from: " << source << "-" << tm->stations[source] << " to " << destination << "-" << tm->stations[destination] << endl;
 				else
 					cout << "There is not a direct route from: " << source << "-" << tm->stations[source] << " to " << destination << "-" << tm->stations[destination] << endl;
+				break;
+			case 4:
+				cout << "Enter your departing station: ";
+				cin >> source;
+				cout << "Enter your destination station: ";
+				cin >> destination;
+				
+				route = tm->canReachDest( source, destination );
+				if(route)
+					cout << "There is a route from " << tm->stations[source] << " to " << tm->stations[destination] << endl;
+				else
+					cout << "There is not a route from " << tm->stations[source] << " to " << tm->stations[destination] << endl;
+				break;
+			case 5:
+				cout << "Enter your departing station: ";
+				cin >> source;
+				cout << "Enter your destination station: ";
+				cin >> destination;
+				tm->shortestTrainRide(source, destination);
+				break;
+			case 6:
+				cout << "Enter your departing station: ";
+				cin >> source;
+				cout << "Enter your destination station: ";
+				cin >> destination;
+				cout << "Enter your departing time (24 Hour format HH:MM): ";
+				cin >> dep_time_s;
+				
+				//Split the string give by user into hours & minutes
+				if((colon_found = dep_time_s.find(":")) != string::npos)
+				{
+					hours_s = dep_time_s.substr(0, colon_found);
+					minutes_s = dep_time_s.substr(colon_found+1, string::npos);
+				}
+				
+				//converstion from string hours_s to in hours & string minutes_s to int minutes.
+				hours = stringToInt(hours_s);
+				minutes = stringToInt(minutes_s);
+				if( hours == -1 or minutes == -1)
+				{
+						cout << "Error converting user time to integer. Exiting" << endl;
+						return 1;
+				}
+				if( hours >= 24 or hours < 0 or minutes >= 60 or minutes < 0)
+				{
+					cout << "Time entered is not valid" << endl;
+					return 1;
+				}
+				
+				//Now that we have them converted to ints, make them the same time metric the graph uses (minutes since midnight).
+				hours = hours * 60; 
+				dep_time = hours + minutes;
+				if(tm->debug)
+					cout << "Dep Time after conversion is: " << dep_time << endl;
+				
+				//After everything is gathered from user, send to the Dijkstra function to print out a shortest overall tree.
+				if(!tm->overallShortestRoute(source, destination, dep_time))
+					cout << "You cannot get to your destintation with that given time, ensure there is at least a route from your depature to your arrival station (Option 4)" << endl;
+				
 				break;
 			case 7: 
 				return 0;
