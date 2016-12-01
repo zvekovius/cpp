@@ -432,8 +432,8 @@ bool train_manage::overallShortestRoute( int start, int dst, int start_time )
 				if ( ((tmp->ride_time + compare) + cost[node] < cost[tmp->dst_station]) && !visited[tmp->dst_station] && cost[node] != INT_MAX )
 				{	
 					cost[tmp->dst_station] = tmp->ride_time + compare + cost[node];
-					if(parent[node] == -1)
-						parent[node] = tmp->dst_station;
+					
+					parent[tmp->dst_station] = node;
 				}
 
 				//Keep track if we actually get to our destination or not.
@@ -452,10 +452,6 @@ bool train_manage::overallShortestRoute( int start, int dst, int start_time )
 				{
 					previous = tmp;
 					enq(tmp->dst_station, tmp->ride_time + compare);
-					
-					/*
-					if( parent[node] == -1 )
-						parent[node] = tmp->dst_station;*/
 				}
 				tmp = tmp->next;
 			}
@@ -467,13 +463,31 @@ bool train_manage::overallShortestRoute( int start, int dst, int start_time )
 	}
 	cout << endl;
 	
-	for( i=start; i < nodeCount; i++ )
+	//Parent vector should probably be a structure to keep more data about the trains. 
+	//As a work-around, we will use a function to grab those details. Not a very efficient way to handle it.
+	int carry = dst; //Debug variable
+	if(debug)
 	{
-		if(parent[i] != -1)
+		//This will print the tree backwards for debug purposes.
+		for( i=start; i < nodeCount; i++ )
 		{
-			cout << "(" << i << "," << parent[i] << ")";
+			if(parent[carry] != -1)
+			{
+				cout << "(" << carry << "," << parent[carry] << ")";
+				carry = parent[carry];
+			}
 		}
 	}
+	
+	//Push the path onto a stack.
+	// stack <pair<int,int> > stack;
+	// s.push( make_pair( 1, 2) );
+	// pair <int, int> p = s.top()
+	// p.first, p.second
+	// s.pop (or whatever the dequeue function is.
+	//As popping from the stack, use function to get schedule details.
+	//Print schedule details.
+	cout << endl;
 	return reachable;
 }
 
